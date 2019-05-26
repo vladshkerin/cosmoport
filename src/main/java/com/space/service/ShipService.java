@@ -8,13 +8,7 @@ public interface ShipService {
 
     List findAll();
 
-    List<Ship> findAllWithDetail();
-
-    int findCountAllWithDetail();
-
     Ship findById(Long id);
-
-    Ship create();
 
     Ship save(Ship ship);
 
