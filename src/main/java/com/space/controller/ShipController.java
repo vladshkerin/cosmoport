@@ -20,17 +20,17 @@ import java.util.Map;
 public class ShipController {
 
     @Autowired
-    private ShipService jpaShipService;
+    private ShipService shipService;
 
     @GetMapping("/ships")
     public List<Ship> findAllByPage(@RequestParam Map<String, String> params) {
-        String defaultSize = Integer.toString(jpaShipService.findAll().size());
+        String defaultSize = Integer.toString(shipService.findAll().size());
         ShipOrder order = ShipOrder.valueOf(params.getOrDefault("order", "ID"));
         int pageNumber = Integer.parseInt(params.getOrDefault("pageNumber", "0"));
         int pageSize = Integer.parseInt(params.getOrDefault("pageSize", defaultSize));
 
         PageRequest pageRequest = PageRequest.of(pageNumber, pageSize, Sort.by(order.getFieldName()));
-        Page<Ship> shipPage = jpaShipService.findAllByPage(pageRequest);
+        Page<Ship> shipPage = shipService.findAllByPage(pageRequest);
 
         return Lists.newArrayList(shipPage.iterator());
     }
@@ -44,24 +44,24 @@ public class ShipController {
     @GetMapping("/ships/{id}")
     public Ship findById(@PathVariable Long id) {
         log.info("Show ship by id: " + id);
-        return jpaShipService.findById(id);
+        return shipService.findById(id);
     }
 
     @PostMapping("/ships")
     public Ship create(@RequestBody Ship ship) {
         log.info("Create ship");
-        return jpaShipService.create(ship);
+        return shipService.create(ship);
     }
 
     @PostMapping("/ships/{id}")
     public Ship update(@PathVariable Long id, @RequestBody Ship ship) {
         log.info("Update ship");
-        return jpaShipService.update(ship);
+        return shipService.update(ship);
     }
 
     @DeleteMapping("/ships/{id}")
     public void delete(@PathVariable Long id) {
         log.info("Delete ship");
-        jpaShipService.delete(id);
+        shipService.delete(id);
     }
 }

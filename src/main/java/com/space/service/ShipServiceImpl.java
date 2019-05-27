@@ -1,5 +1,6 @@
 package com.space.service;
 
+import com.space.exception.NoFoundShipException;
 import com.space.exception.ValidationShipException;
 import com.space.model.Ship;
 import com.space.repository.ShipRepository;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
 import java.lang.reflect.Field;
@@ -27,7 +29,7 @@ import static org.springframework.util.ObjectUtils.isEmpty;
 @Slf4j
 @Repository
 @Transactional
-@Service("jpaShipService")
+@Service("shipService")
 @SuppressWarnings("JpaQueryApiInspection")
 public class ShipServiceImpl implements ShipService {
 
@@ -54,7 +56,11 @@ public class ShipServiceImpl implements ShipService {
     public Ship findById(Long id) {
         TypedQuery<Ship> query = em.createNamedQuery("Ship.findById", Ship.class);
         query.setParameter("id", id);
-        return query.getSingleResult();
+        try {
+            return query.getSingleResult();
+        } catch (NoResultException e) {
+            throw new NoFoundShipException("Not found ship with id: " + id);
+        }
     }
 
     @Override
@@ -93,25 +99,27 @@ public class ShipServiceImpl implements ShipService {
         for (Field field : fields) {
             if (Modifier.isPrivate(field.getModifiers())) {
                 field.setAccessible(true);
-                String fieldName = field.getName();
-                if (!"id".equals(fieldName) &&
-                        !"isUsed".equals(fieldName) &&
-                        !"rating".equals(fieldName)) {
-                    if ("prodDate".equals(fieldName)) {
-                        int yearShip = getYearShip(ship);
-                        if (yearShip < 2800 || yearShip > 3019) {
+            }
+
+            switch (field.getName()) {
+                case "name":
+                case "planet":
+                case "shipType":
+                case "speed":
+                case "crewSize":
+                    try {
+                        if (isEmpty(field.get(ship))) {
                             return false;
                         }
-                    } else {
-                        try {
-                            if (isEmpty(field.get(ship))) {
-                                return false;
-                            }
-                        } catch (IllegalAccessException e) {
-                            throw new ValidationShipException(e.getMessage());
-                        }
+                    } catch (IllegalAccessException e) {
+                        throw new ValidationShipException(e.getMessage());
                     }
-                }
+                    break;
+                case "prodDate":
+                    int yearShip = getYearShip(ship);
+                    if (yearShip < 2800 || yearShip > 3019) {
+                        return false;
+                    }
             }
         }
         return true;
