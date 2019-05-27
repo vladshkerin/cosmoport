@@ -1,5 +1,6 @@
 package com.space.service;
 
+import com.space.exception.ValidationShipException;
 import com.space.model.Ship;
 import com.space.repository.ShipRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +14,15 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
+
+import static org.springframework.util.ObjectUtils.isEmpty;
 
 @Slf4j
 @Repository
@@ -51,7 +60,12 @@ public class ShipServiceImpl implements ShipService {
     @Override
     public Ship create(Ship ship) {
         log.info("Inserting new ship");
-        em.persist(ship);
+        if (validationShip(ship)) {
+            ship.setRating(calculateRating(ship, 1));
+            em.persist(ship);
+        } else {
+            throw new ValidationShipException("Validate error with id: " + ship.getId());
+        }
         return ship;
     }
 
@@ -72,5 +86,46 @@ public class ShipServiceImpl implements ShipService {
         } else {
             //
         }
+    }
+
+    private boolean validationShip(Ship ship) {
+        Field[] fields = ship.getClass().getDeclaredFields();
+        for (Field field : fields) {
+            if (Modifier.isPrivate(field.getModifiers())) {
+                field.setAccessible(true);
+                String fieldName = field.getName();
+                if (!"id".equals(fieldName) &&
+                        !"isUsed".equals(fieldName) &&
+                        !"rating".equals(fieldName)) {
+                    if ("prodDate".equals(fieldName)) {
+                        int yearShip = getYearShip(ship);
+                        if (yearShip < 2800 || yearShip > 3019) {
+                            return false;
+                        }
+                    } else {
+                        try {
+                            if (isEmpty(field.get(ship))) {
+                                return false;
+                            }
+                        } catch (IllegalAccessException e) {
+                            throw new ValidationShipException(e.getMessage());
+                        }
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    private double calculateRating(Ship ship, Integer ratio) {
+        double rating = (80.0 * ship.getSpeed() * ratio) / (3019.0 - getYearShip(ship) + 1);
+        return BigDecimal.valueOf(rating)
+                .setScale(2, RoundingMode.HALF_UP)
+                .doubleValue();
+    }
+
+    private int getYearShip(Ship ship) {
+        LocalDate localDate = ship.getProdDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        return localDate.getYear();
     }
 }
