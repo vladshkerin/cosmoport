@@ -1,6 +1,7 @@
 package com.space.controller;
 
 import com.google.common.collect.Lists;
+import com.space.model.CountShip;
 import com.space.model.Ship;
 import com.space.service.ShipService;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +19,7 @@ import java.util.Map;
 @RequestMapping(value = "/rest", produces = "application/json")
 public class ShipController {
 
+    @Autowired
     private ShipService jpaShipService;
 
     @GetMapping("/ships")
@@ -34,13 +36,13 @@ public class ShipController {
     }
 
     @GetMapping("/ships/count")
-    public int countShips(@RequestParam Map<String, String> params) {
-        log.info("Count ships");
-        return findAllByPage(params).size();
+    public CountShip countShips(@RequestParam Map<String, String> params) {
+        log.info("CountShip ships");
+        return new CountShip(findAllByPage(params).size());
     }
 
-    @GetMapping("/ships/id")
-    public Ship findById(Long id) {
+    @GetMapping("/ships/{id}")
+    public Ship findById(@PathVariable Long id) {
         log.info("Show ship by id: " + id);
         return jpaShipService.findById(id);
     }
@@ -61,10 +63,5 @@ public class ShipController {
     public void delete(@PathVariable Long id) {
         log.info("Delete ship");
         jpaShipService.delete(id);
-    }
-
-    @Autowired
-    public void setJpaShipService(ShipService jpaShipService) {
-        this.jpaShipService = jpaShipService;
     }
 }

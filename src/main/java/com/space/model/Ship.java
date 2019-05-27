@@ -1,15 +1,13 @@
 package com.space.model;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
 import javax.persistence.*;
 import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.util.Date;
 
-@Getter
-@Setter
+@Data
 @Entity
 @Table(name = "ship")
 @NamedQueries({
@@ -36,7 +34,6 @@ public class Ship implements Serializable {
     @Column(name = "shipType")
     private ShipType shipType;
 
-//    @Size(min = 2800, max = 3019)
     @Temporal(TemporalType.DATE)
     @Column(name = "prodDate")
     private Date prodDate;
@@ -56,5 +53,4 @@ public class Ship implements Serializable {
 
     @Column(name = "rating")
     private Double rating;
-
 }
