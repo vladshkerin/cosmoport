@@ -1,9 +1,9 @@
 package com.space.service;
 
-import com.space.exception.NoFoundShipException;
-import com.space.exception.ValidationShipException;
+import com.space.exception.BadRequestException;
+import com.space.exception.NoFoundException;
 import com.space.model.Ship;
-import com.space.repository.ShipRepository;
+import com.space.repository.ShipJpaRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -13,9 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
-import javax.persistence.TypedQuery;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
@@ -23,6 +21,8 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Optional;
 
 import static org.springframework.util.ObjectUtils.isEmpty;
 
@@ -30,36 +30,43 @@ import static org.springframework.util.ObjectUtils.isEmpty;
 @Repository
 @Transactional
 @Service("shipService")
-@SuppressWarnings("JpaQueryApiInspection")
 public class ShipServiceImpl implements ShipService {
 
     @PersistenceContext
     private EntityManager em;
 
-    @Autowired
-    private ShipRepository shipRepository;
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<Ship> findAll() {
-        return em.createNamedQuery("Ship.findAll", Ship.class).getResultList();
-    }
+    private ShipJpaRepository shipJpaRepository;
 
     @Override
     @Transactional(readOnly = true)
     public Page<Ship> findAllByPage(Pageable pageable) {
-        return shipRepository.findAll(pageable);
+        return shipJpaRepository.findAll(pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Ship> findAllWithFilter(String name, String planet, Pageable pageable) {
+        return shipJpaRepository.findAllWithFilter(name, planet, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Ship> findAllByNameContainingAndPlanetContaining(String name, String planet, Pageable pageable) {
+        return shipJpaRepository.findAllByNameContainingAndPlanetContaining(name, planet, pageable);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Ship findById(Long id) {
-        TypedQuery<Ship> query = em.createNamedQuery("Ship.findById", Ship.class);
-        query.setParameter("id", id);
-        try {
-            return query.getSingleResult();
-        } catch (NoResultException e) {
-            throw new NoFoundShipException("Not found ship with id: " + id);
+        if (!isStringLong(String.valueOf(id)) || id < 1) {
+            throw new BadRequestException("Not validation id: " + id);
+        }
+
+        Optional<Ship> shipOptional = shipJpaRepository.findById(id);
+        if (shipOptional.isPresent()) {
+            return shipOptional.get();
+        } else {
+            throw new NoFoundException("Not found ship with id: " + id);
         }
     }
 
@@ -70,7 +77,7 @@ public class ShipServiceImpl implements ShipService {
             ship.setRating(calculateRating(ship, 1));
             em.persist(ship);
         } else {
-            throw new ValidationShipException("Validate error with id: " + ship.getId());
+            throw new BadRequestException("Validate error with id: " + ship.getId());
         }
         return ship;
     }
@@ -85,13 +92,21 @@ public class ShipServiceImpl implements ShipService {
     @Override
     public void delete(Long id) {
         Ship ship = findById(id);
-        if (ship != null) {
-            Ship mergedShip = em.merge(ship);
-            em.remove(mergedShip);
-            log.info("Deleted ship with id: " + id);
-        } else {
-            //
+        Ship mergedShip = em.merge(ship);
+        em.remove(mergedShip);
+        log.info("Deleted ship with id: " + id);
+    }
+
+    private boolean isStringLong(String s) {
+        try {
+            Long.parseLong(s);
+            if (!s.contains(".")) {
+                return true;
+            }
+        } catch (NumberFormatException e) {
+            //empty body
         }
+        return false;
     }
 
     private boolean validationShip(Ship ship) {
@@ -112,7 +127,7 @@ public class ShipServiceImpl implements ShipService {
                             return false;
                         }
                     } catch (IllegalAccessException e) {
-                        throw new ValidationShipException(e.getMessage());
+                        throw new BadRequestException(e.getMessage());
                     }
                     break;
                 case "prodDate":
@@ -135,5 +150,10 @@ public class ShipServiceImpl implements ShipService {
     private int getYearShip(Ship ship) {
         LocalDate localDate = ship.getProdDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
         return localDate.getYear();
+    }
+
+    @Autowired
+    public void setShipJpaRepository(ShipJpaRepository shipJpaRepository) {
+        this.shipJpaRepository = shipJpaRepository;
     }
 }

@@ -8,9 +8,11 @@ import java.util.List;
 
 public interface ShipService {
 
-    List findAll();
-
     Page<Ship> findAllByPage(Pageable pageable);
+
+    List<Ship> findAllWithFilter(String name, String planet, Pageable pageable);
+
+    List<Ship> findAllByNameContainingAndPlanetContaining(String name, String planet, Pageable pageable);
 
     Ship findById(Long id);
 
@@ -19,5 +21,4 @@ public interface ShipService {
     Ship update(Ship ship);
 
     void delete(Long ship);
-
 }
