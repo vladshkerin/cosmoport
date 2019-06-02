@@ -1,25 +1,22 @@
 package com.space.model;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import javax.persistence.*;
 import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.util.Date;
 
-@Data
+@Getter
+@Setter
 @Entity
 @Table(name = "ship")
-@NamedQueries({
-        @NamedQuery(name = "Ship.findAll", query = "SELECT s FROM Ship s"),
-        @NamedQuery(name = "Ship.findById", query = "SELECT distinct s FROM Ship s WHERE s.id = :id")
-})
-@SuppressWarnings("JpaQlInspection")
 public class Ship implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
+    @Column(name = "id", nullable = false)
     private Long id;
 
     @Size(max = 50)
