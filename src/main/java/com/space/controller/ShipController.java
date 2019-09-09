@@ -33,9 +33,9 @@ public class ShipController {
     }
 
     @GetMapping("/ships/count")
-    public int countShips(@RequestParam Map<String, String> params) {
+    public int countShips() {
         log.info("CountShip ships");
-        return findAllByPage(params).size();
+        return shipService.findAll().size();
     }
 
     @GetMapping("/ships/{id}")

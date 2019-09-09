@@ -36,7 +36,7 @@ public class Ship implements Serializable {
     private Date prodDate;
 
     @Column(name = "isUsed")
-    private Boolean isUsed;
+    private Boolean isUsed = false;
 
     @DecimalMin(value = "0.01")
     @DecimalMax(value = "0.99")

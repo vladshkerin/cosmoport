@@ -21,7 +21,6 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import static org.springframework.util.ObjectUtils.isEmpty;
@@ -36,6 +35,12 @@ public class ShipServiceImpl implements ShipService {
     private EntityManager em;
 
     private ShipJpaRepository shipJpaRepository;
+
+    @Override
+    @Transactional
+    public List<Ship> findAll() {
+        return shipJpaRepository.findAll();
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -71,10 +76,11 @@ public class ShipServiceImpl implements ShipService {
     }
 
     @Override
+    @Transactional
     public Ship create(Ship ship) {
         log.info("Inserting new ship");
         if (validationShip(ship)) {
-            ship.setRating(calculateRating(ship, 1));
+            ship.setRating(calculateRating(ship));
             em.persist(ship);
         } else {
             throw new BadRequestException("Validate error with id: " + ship.getId());
@@ -116,18 +122,34 @@ public class ShipServiceImpl implements ShipService {
                 field.setAccessible(true);
             }
 
+            try {
+                if (!"id isUsed rating".contains(field.getName()) && isEmpty(field.get(ship))) {
+                    return false;
+                }
+            } catch (IllegalAccessException e) {
+                throw new BadRequestException(e.getMessage());
+            }
+
             switch (field.getName()) {
                 case "name":
+                    if (ship.getName().length() >= 50) {
+                        return false;
+                    }
+                    break;
                 case "planet":
-                case "shipType":
+                    if (ship.getPlanet().length() >= 50) {
+                        return false;
+                    }
+                    break;
                 case "speed":
+                    double speed = new BigDecimal(ship.getSpeed()).setScale(2, RoundingMode.UP).doubleValue();
+                    if (speed < 0.01 || speed > 0.99) {
+                        return false;
+                    }
                 case "crewSize":
-                    try {
-                        if (isEmpty(field.get(ship))) {
-                            return false;
-                        }
-                    } catch (IllegalAccessException e) {
-                        throw new BadRequestException(e.getMessage());
+                    int crewSize = ship.getCrewSize();
+                    if (crewSize < 1 || crewSize > 9999) {
+                        return false;
                     }
                     break;
                 case "prodDate":
@@ -140,7 +162,8 @@ public class ShipServiceImpl implements ShipService {
         return true;
     }
 
-    private double calculateRating(Ship ship, Integer ratio) {
+    private double calculateRating(Ship ship) {
+        double ratio = ship.getIsUsed() ? 0.5 : 1;
         double rating = (80.0 * ship.getSpeed() * ratio) / (3019.0 - getYearShip(ship) + 1);
         return BigDecimal.valueOf(rating)
                 .setScale(2, RoundingMode.HALF_UP)

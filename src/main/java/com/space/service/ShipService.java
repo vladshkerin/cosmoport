@@ -8,6 +8,8 @@ import java.util.List;
 
 public interface ShipService {
 
+    List<Ship> findAll();
+
     Page<Ship> findAllByPage(Pageable pageable);
 
     List<Ship> findAllWithFilter(String name, String planet, Pageable pageable);
