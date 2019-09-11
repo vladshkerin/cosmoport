@@ -1,4 +1,4 @@
-package com.space.service;
+package com.space.service.dao;
 
 import com.space.model.Ship;
 import org.springframework.data.domain.Page;

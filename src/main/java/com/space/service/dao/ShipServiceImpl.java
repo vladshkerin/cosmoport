@@ -1,9 +1,12 @@
-package com.space.service;
+package com.space.service.dao;
 
 import com.space.exception.BadRequestException;
 import com.space.exception.NoFoundException;
 import com.space.model.Ship;
 import com.space.repository.ShipJpaRepository;
+import com.space.service.CriteriaService;
+import com.space.service.UtilsService;
+import com.space.service.ValidationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -15,17 +18,9 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
-import static org.springframework.util.ObjectUtils.isEmpty;
 
 @Service("shipService")
 @Repository
@@ -39,6 +34,10 @@ public class ShipServiceImpl implements ShipService {
     private ShipJpaRepository shipJpaRepository;
 
     private CriteriaService criteriaService;
+
+    private ValidationService validationService;
+
+    private UtilsService utilsService;
 
     @Transactional(readOnly = true)
     @Override
@@ -63,7 +62,7 @@ public class ShipServiceImpl implements ShipService {
     @Transactional(readOnly = true)
     @Override
     public Ship findById(Long id) {
-        if (!isStringLong(String.valueOf(id)) || id < 1) {
+        if (!utilsService.isStringLong(String.valueOf(id)) || id < 1) {
             throw new BadRequestException("Not validation id: " + id);
         }
 
@@ -77,8 +76,8 @@ public class ShipServiceImpl implements ShipService {
 
     @Override
     public Ship create(Ship ship) {
-        if (validationShip(ship)) {
-            ship.setRating(calculateRating(ship));
+        if (validationService.validationShip(ship)) {
+            ship.setRating(utilsService.calculateRating(ship));
             entityManager.persist(ship);
         } else {
             throw new BadRequestException("Validate error with id: " + ship.getId());
@@ -102,78 +101,6 @@ public class ShipServiceImpl implements ShipService {
         log.info("Ship deleted with id: " + id);
     }
 
-    private boolean isStringLong(String s) {
-        try {
-            Long.parseLong(s);
-            if (!s.contains(".")) {
-                return true;
-            }
-        } catch (NumberFormatException e) {
-            //empty body
-        }
-        return false;
-    }
-
-    private boolean validationShip(Ship ship) {
-        Field[] fields = ship.getClass().getDeclaredFields();
-        for (Field field : fields) {
-            if (Modifier.isPrivate(field.getModifiers())) {
-                field.setAccessible(true);
-            }
-
-            try {
-                if (!"id isUsed rating".contains(field.getName()) && isEmpty(field.get(ship))) {
-                    return false;
-                }
-            } catch (IllegalAccessException e) {
-                throw new BadRequestException(e.getMessage());
-            }
-
-            switch (field.getName()) {
-                case "name":
-                    if (ship.getName().length() >= 50) {
-                        return false;
-                    }
-                    break;
-                case "planet":
-                    if (ship.getPlanet().length() >= 50) {
-                        return false;
-                    }
-                    break;
-                case "speed":
-                    double speed = new BigDecimal(ship.getSpeed()).setScale(2, RoundingMode.UP).doubleValue();
-                    if (speed < 0.01 || speed > 0.99) {
-                        return false;
-                    }
-                case "crewSize":
-                    int crewSize = ship.getCrewSize();
-                    if (crewSize < 1 || crewSize > 9999) {
-                        return false;
-                    }
-                    break;
-                case "prodDate":
-                    int yearShip = getYearShip(ship);
-                    if (yearShip < 2800 || yearShip > 3019) {
-                        return false;
-                    }
-            }
-        }
-        return true;
-    }
-
-    private double calculateRating(Ship ship) {
-        double ratio = ship.getIsUsed() ? 0.5 : 1;
-        double rating = (80.0 * ship.getSpeed() * ratio) / (3019.0 - getYearShip(ship) + 1);
-        return BigDecimal.valueOf(rating)
-                .setScale(2, RoundingMode.HALF_UP)
-                .doubleValue();
-    }
-
-    private int getYearShip(Ship ship) {
-        LocalDate localDate = ship.getProdDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        return localDate.getYear();
-    }
-
     @Autowired
     public void setShipJpaRepository(ShipJpaRepository shipJpaRepository) {
         this.shipJpaRepository = shipJpaRepository;
@@ -182,5 +109,15 @@ public class ShipServiceImpl implements ShipService {
     @Autowired
     public void setCriteriaService(CriteriaService criteriaService) {
         this.criteriaService = criteriaService;
+    }
+
+    @Autowired
+    public void setValidationService(ValidationService validationService) {
+        this.validationService = validationService;
+    }
+
+    @Autowired
+    public void setUtilsService(UtilsService utilsService) {
+        this.utilsService = utilsService;
     }
 }
