@@ -14,7 +14,7 @@ import java.util.Map;
 @Service("criteriaService")
 public class CriteriaService {
 
-    Query createQuery(EntityManager entityManager, Map<String, String> params) {
+    public Query createQuery(EntityManager entityManager, Map<String, String> params) {
         CriteriaBuilder builder = entityManager.getCriteriaBuilder();
         CriteriaQuery<Ship> criteria = builder.createQuery(Ship.class);
         Root<Ship> root = criteria.from(Ship.class);
