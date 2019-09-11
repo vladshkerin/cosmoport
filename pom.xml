@@ -13,13 +13,17 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>8</java.version>
+
+        <maven.compiler.plugin.version>3.8.1</maven.compiler.plugin.version>
+        <maven.war.plugin.version>3.2.3</maven.war.plugin.version>
+
         <spring.version>5.1.9.RELEASE</spring.version>
         <spring.data.jpa.version>2.1.10.RELEASE</spring.data.jpa.version>
         <servlet.version>4.0.1</servlet.version>
         <jstl.version>1.2</jstl.version>
         <slf4j-log4j12.version>1.7.26</slf4j-log4j12.version>
         <hibernate.version>5.4.4.Final</hibernate.version>
-        <hibernate.validator.version>6.0.17.Final</hibernate.validator.version>
+        <hibernate.validator.version>6.0.16.Final</hibernate.validator.version>
         <mysql.connector.java.version>8.0.17</mysql.connector.java.version>
         <byte.buddy.version>1.9.11</byte.buddy.version>
         <jackson-databind.version>2.9.8</jackson-databind.version>
@@ -127,7 +131,7 @@
         </dependency>
 
         <dependency>
-            <groupId>org.hibernate</groupId>
+            <groupId>org.hibernate.validator</groupId>
             <artifactId>hibernate-validator</artifactId>
             <version>${hibernate.validator.version}</version>
         </dependency>
@@ -176,15 +180,17 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>${maven.compiler.plugin.version}</version>
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
+                    <encoding>${project.build.sourceEncoding}</encoding>
                 </configuration>
             </plugin>
 
             <plugin>
                 <artifactId>maven-war-plugin</artifactId>
-                <version>3.2.2</version>
+                <version>${maven.war.plugin.version}</version>
                 <configuration>
                     <failOnMissingWebXml>false</failOnMissingWebXml>
                 </configuration>
