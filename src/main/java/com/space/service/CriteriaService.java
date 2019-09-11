@@ -29,25 +29,6 @@ public class CriteriaService {
         return query;
     }
 
-    private Order imposeOrder(CriteriaBuilder builder, Root<Ship> root, Map<String, String> params) {
-        Order order = builder.asc(root.get(Ship_.id));
-        String orderStr = String.valueOf(params.getOrDefault("order", "")).toLowerCase();
-
-        switch (orderStr) {
-            case "speed":
-                order = builder.asc(root.get(Ship_.speed));
-                break;
-            case "date":
-                order = builder.asc(root.get(Ship_.prodDate));
-                break;
-            case "rating":
-                order = builder.asc(root.get(Ship_.rating));
-                break;
-        }
-
-        return order;
-    }
-
     private Predicate imposeRestrictions(CriteriaBuilder builder, Root<Ship> root, Map<String, String> params) {
         String name = params.getOrDefault("name", "");
         String planet = params.getOrDefault("planet", "");
@@ -62,7 +43,6 @@ public class CriteriaService {
         Double minRating = Double.valueOf(params.getOrDefault("minRating", "0.0"));
         Double maxRating = Double.valueOf(params.getOrDefault("maxRating", "0.0"));
 
-        // Restriction
         Predicate predicate = builder.conjunction();
         if (!name.isEmpty()) {
             Predicate p = builder.like(root.get(Ship_.name), "%" + name + "%");
@@ -98,6 +78,25 @@ public class CriteriaService {
         }
 
         return predicate;
+    }
+
+    private Order imposeOrder(CriteriaBuilder builder, Root<Ship> root, Map<String, String> params) {
+        Order order = builder.asc(root.get(Ship_.id));
+        String orderStr = String.valueOf(params.getOrDefault("order", "")).toLowerCase();
+
+        switch (orderStr) {
+            case "speed":
+                order = builder.asc(root.get(Ship_.speed));
+                break;
+            case "date":
+                order = builder.asc(root.get(Ship_.prodDate));
+                break;
+            case "rating":
+                order = builder.asc(root.get(Ship_.rating));
+                break;
+        }
+
+        return order;
     }
 
     private void imposePagination(Query query, Map<String, String> params) {
