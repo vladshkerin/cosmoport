@@ -4,32 +4,22 @@ import com.space.model.Ship;
 import com.space.service.ShipService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
 
-@Slf4j
 @RestController
 @RequestMapping(value = "/rest", produces = "application/json")
+@Slf4j
 public class ShipController {
 
     private ShipService shipService;
 
     @GetMapping("/ships")
-    public List<Ship> findAllByPage(@RequestParam Map<String, String> params) {
-        String name = params.getOrDefault("name", "");
-        String planet = params.getOrDefault("planet", "");
-
-        ShipOrder order = ShipOrder.valueOf(params.getOrDefault("order", "ID"));
-        int pageNumber = Integer.parseInt(params.getOrDefault("pageNumber", "0"));
-        int pageSize = Integer.parseInt(params.getOrDefault("pageSize", "3"));
-        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by(order.getFieldName()));
-
-        return shipService.findAllWithFilter(name, planet, pageable);
+    public List<Ship> findAllWithCriteria(@RequestParam Map<String, String> params) {
+        log.info("Find all ship with criteria");
+        return shipService.findAllByCriteria(params);
     }
 
     @GetMapping("/ships/count")

@@ -14,8 +14,7 @@ import java.util.List;
 public interface ShipJpaRepository extends JpaRepository<Ship, Long>, PagingAndSortingRepository<Ship, Long> {
 
     @Query("SELECT s FROM Ship s WHERE s.name LIKE %:name% AND s.planet LIKE %:planet%")
-    List<Ship> findAllWithFilter(@Param("name") String name, @Param("planet") String planet,
+    List<Ship> findAllWithFilter(@Param("name") String name,
+                                 @Param("planet") String planet,
                                  Pageable pageable);
-
-    List<Ship> findAllByNameContainingAndPlanetContaining(String name, String planet, Pageable pageable);
 }

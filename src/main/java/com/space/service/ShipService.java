@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
+import java.util.Map;
 
 public interface ShipService {
 
@@ -12,9 +13,7 @@ public interface ShipService {
 
     Page<Ship> findAllByPage(Pageable pageable);
 
-    List<Ship> findAllWithFilter(String name, String planet, Pageable pageable);
-
-    List<Ship> findAllByNameContainingAndPlanetContaining(String name, String planet, Pageable pageable);
+    List<Ship> findAllByCriteria(Map<String, String> params);
 
     Ship findById(Long id);
 
