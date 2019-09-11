@@ -16,38 +16,38 @@ public class Ship implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false)
+    @Column(nullable = false)
     private Long id;
 
     @Size(max = 50)
-    @Column(name = "name")
+    @Column
     private String name;
 
     @Size(max = 50)
-    @Column(name = "planet")
+    @Column
     private String planet;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "shipType")
+    @Column
     private ShipType shipType;
 
     @Temporal(TemporalType.DATE)
-    @Column(name = "prodDate")
+    @Column
     private Date prodDate;
 
-    @Column(name = "isUsed")
+    @Column
     private Boolean isUsed = false;
 
     @DecimalMin(value = "0.01")
     @DecimalMax(value = "0.99")
-    @Column(name = "speed")
+    @Column
     private Double speed;
 
     @Min(1)
     @Max(9999)
-    @Column(name = "crewSize")
+    @Column
     private Integer crewSize;
 
-    @Column(name = "rating")
+    @Column
     private Double rating;
 }
