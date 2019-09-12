@@ -8,31 +8,37 @@ import org.springframework.stereotype.Service;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.persistence.criteria.*;
+import javax.persistence.metamodel.SingularAttribute;
 import java.util.Date;
 import java.util.Map;
 
 @Service("criteriaService")
 public class CriteriaService {
 
+    private Map<String, String> params;
+    private CriteriaBuilder builder;
+    private Root<Ship> root;
+
     public Query createQuery(EntityManager entityManager, Map<String, String> params, boolean isPagination) {
-        CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+        this.params = params;
+        this.builder = entityManager.getCriteriaBuilder();
         CriteriaQuery<Ship> criteria = builder.createQuery(Ship.class);
-        Root<Ship> root = criteria.from(Ship.class);
+        this.root = criteria.from(Ship.class);
 
         criteria.select(root)
-                .where(getRestrictions(builder, root, params))
-                .orderBy(getOrder(builder, root, params));
+                .where(getRestrictions())
+                .orderBy(getOrder());
 
         Query query = entityManager.createQuery(criteria);
 
         if (isPagination) {
-            imposePagination(query, params);
+            imposePagination(query);
         }
 
         return query;
     }
 
-    private Predicate getRestrictions(CriteriaBuilder builder, Root<Ship> root, Map<String, String> params) {
+    private Predicate getRestrictions() {
         String name = params.getOrDefault("name", "");
         String planet = params.getOrDefault("planet", "");
         ShipType shipType = ShipType.valueOf(params.getOrDefault("shipType", "EMPTY"));
@@ -47,55 +53,86 @@ public class CriteriaService {
         Double maxRating = Double.valueOf(params.getOrDefault("maxRating", "0.0"));
 
         Predicate predicate = builder.conjunction();
-        if (!name.isEmpty()) {
-            Predicate p = builder.like(root.get(Ship_.name), "%" + name + "%");
-            predicate = builder.and(predicate, p);
-        }
-        if (!planet.isEmpty()) {
-            Predicate p = builder.like(root.get(Ship_.planet), "%" + planet + "%");
-            predicate = builder.and(predicate, p);
-        }
-        if (shipType != ShipType.EMPTY) {
-            Predicate p = builder.equal(root.get(Ship_.shipType), shipType);
-            predicate = builder.and(predicate, p);
-        }
-        if (after > 0 && before > 0) {
-            Predicate p = builder.between(root.get(Ship_.prodDate), new Date(after), new Date(before));
-            predicate = builder.and(predicate, p);
-        }
-        if (!isUsedStr.isEmpty()) {
-            Predicate p = builder.equal(root.get(Ship_.isUsed), Boolean.valueOf(isUsedStr));
-            predicate = builder.and(predicate, p);
-        }
-        if (minSpeed > 0.0) {
-            Predicate p = builder.greaterThanOrEqualTo(root.get(Ship_.speed), minSpeed);
-            predicate = builder.and(predicate, p);
-        }
-        if (maxSpeed > 0.0) {
-            Predicate p = builder.lessThanOrEqualTo(root.get(Ship_.speed), maxSpeed);
-            predicate = builder.and(predicate, p);
-        }
-        if (minCrewSize > 0) {
-            Predicate p = builder.greaterThanOrEqualTo(root.get(Ship_.crewSize), minCrewSize);
-            predicate = builder.and(predicate, p);
-        }
-        if (maxCrewSize > 0) {
-            Predicate p = builder.lessThanOrEqualTo(root.get(Ship_.crewSize), maxCrewSize);
-            predicate = builder.and(predicate, p);
-        }
-        if (minRating > 0) {
-            Predicate p = builder.greaterThanOrEqualTo(root.get(Ship_.rating), minRating);
-            predicate = builder.and(predicate, p);
-        }
-        if (maxRating > 0) {
-            Predicate p = builder.lessThanOrEqualTo(root.get(Ship_.rating), maxRating);
-            predicate = builder.and(predicate, p);
-        }
+        predicate = like(name, Ship_.name, predicate);
+        predicate = like(planet, Ship_.planet, predicate);
+        predicate = equalEnum(shipType, predicate);
+        predicate = between(after, before, predicate);
+        predicate = equalString(isUsedStr, predicate);
+        predicate = greaterThanOrEqualToDouble(minSpeed, Ship_.speed, predicate);
+        predicate = lessThanOrEqualToDouble(maxSpeed, Ship_.speed, predicate);
+        predicate = greaterThanOrEqualToInteger(minCrewSize, Ship_.crewSize, predicate);
+        predicate = lessThanOrEqualToInteger(maxCrewSize, Ship_.crewSize, predicate);
+        predicate = greaterThanOrEqualToDouble(minRating, Ship_.rating, predicate);
+        predicate = lessThanOrEqualToDouble(maxRating, Ship_.rating, predicate);
 
         return predicate;
     }
 
-    private Order getOrder(CriteriaBuilder builder, Root<Ship> root, Map<String, String> params) {
+    private Predicate like(String param, SingularAttribute<Ship, String> field, Predicate predicate) {
+        if (!param.isEmpty()) {
+            Predicate p = builder.like(root.get(field), "%" + param + "%");
+            predicate = builder.and(predicate, p);
+        }
+        return predicate;
+    }
+
+    private Predicate equalEnum(ShipType shipType, Predicate predicate) {
+        if (shipType != ShipType.EMPTY) {
+            Predicate p = builder.equal(root.get(Ship_.shipType), shipType);
+            predicate = builder.and(predicate, p);
+        }
+        return predicate;
+    }
+
+    private Predicate between(long after, long before, Predicate predicate) {
+        if (after > 0 && before > 0) {
+            Predicate p = builder.between(root.get(Ship_.prodDate), new Date(after), new Date(before));
+            predicate = builder.and(predicate, p);
+        }
+        return predicate;
+    }
+
+    private Predicate equalString(String isUsedStr, Predicate predicate) {
+        if (!isUsedStr.isEmpty()) {
+            Predicate p = builder.equal(root.get(Ship_.isUsed), Boolean.valueOf(isUsedStr));
+            predicate = builder.and(predicate, p);
+        }
+        return predicate;
+    }
+
+    private Predicate greaterThanOrEqualToDouble(Double param, SingularAttribute<Ship, Double> field, Predicate predicate) {
+        if (param > 0.0) {
+            Predicate p = builder.greaterThanOrEqualTo(root.get(field), param);
+            predicate = builder.and(predicate, p);
+        }
+        return predicate;
+    }
+
+    private Predicate lessThanOrEqualToDouble(Double param, SingularAttribute<Ship, Double> field, Predicate predicate) {
+        if (param > 0.0) {
+            Predicate p = builder.lessThanOrEqualTo(root.get(field), param);
+            predicate = builder.and(predicate, p);
+        }
+        return predicate;
+    }
+
+    private Predicate greaterThanOrEqualToInteger(Integer param, SingularAttribute<Ship, Integer> field, Predicate predicate) {
+        if (param > 0) {
+            Predicate p = builder.greaterThanOrEqualTo(root.get(field), param);
+            predicate = builder.and(predicate, p);
+        }
+        return predicate;
+    }
+
+    private Predicate lessThanOrEqualToInteger(Integer param, SingularAttribute<Ship, Integer> field, Predicate predicate) {
+        if (param > 0) {
+            Predicate p = builder.lessThanOrEqualTo(root.get(field), param);
+            predicate = builder.and(predicate, p);
+        }
+        return predicate;
+    }
+
+    private Order getOrder() {
         Order order = builder.asc(root.get(Ship_.id));
         String orderStr = String.valueOf(params.getOrDefault("order", "")).toLowerCase();
 
@@ -114,7 +151,7 @@ public class CriteriaService {
         return order;
     }
 
-    private void imposePagination(Query query, Map<String, String> params) {
+    private void imposePagination(Query query) {
         int pageNumber = Integer.parseInt(params.getOrDefault("pageNumber", "0"));
         int pageSize = Integer.parseInt(params.getOrDefault("pageSize", "3"));
 
