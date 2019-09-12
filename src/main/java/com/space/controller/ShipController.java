@@ -19,13 +19,13 @@ public class ShipController {
     @GetMapping("/ships")
     public List<Ship> findAllWithCriteria(@RequestParam Map<String, String> params) {
         log.info("Find all ship with criteria");
-        return shipService.findAllByCriteria(params);
+        return shipService.findAllByCriteria(params, true);
     }
 
     @GetMapping("/ships/count")
-    public int countShips() {
+    public int countShips(@RequestParam Map<String, String> params) {
         log.info("CountShip ships");
-        return shipService.findAll().size();
+        return shipService.findAllByCriteria(params, false).size();
     }
 
     @GetMapping("/ships/{id}")
