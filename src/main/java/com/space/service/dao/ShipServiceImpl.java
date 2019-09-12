@@ -9,8 +9,6 @@ import com.space.service.UtilsService;
 import com.space.service.ValidationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,22 +38,10 @@ public class ShipServiceImpl implements ShipService {
     private UtilsService utilsService;
 
     @Transactional(readOnly = true)
-    @Override
-    public List<Ship> findAll() {
-        return shipJpaRepository.findAll();
-    }
-
-    @Transactional(readOnly = true)
-    @Override
-    public Page<Ship> findAllByPage(Pageable pageable) {
-        return shipJpaRepository.findAll(pageable);
-    }
-
-    @Transactional(readOnly = true)
     @SuppressWarnings("unchecked")
     @Override
-    public List<Ship> findAllByCriteria(Map<String, String> params) {
-        Query query = criteriaService.createQuery(entityManager, params);
+    public List<Ship> findAllByCriteria(Map<String, String> params, boolean isPagination) {
+        Query query = criteriaService.createQuery(entityManager, params, isPagination);
         return (List<Ship>) query.getResultList();
     }
 

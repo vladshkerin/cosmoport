@@ -1,19 +1,13 @@
 package com.space.service.dao;
 
 import com.space.model.Ship;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Map;
 
 public interface ShipService {
 
-    List<Ship> findAll();
-
-    Page<Ship> findAllByPage(Pageable pageable);
-
-    List<Ship> findAllByCriteria(Map<String, String> params);
+    List<Ship> findAllByCriteria(Map<String, String> params, boolean isPagination);
 
     Ship findById(Long id);
 
