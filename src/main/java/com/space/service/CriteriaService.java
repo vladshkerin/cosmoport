@@ -20,8 +20,8 @@ public class CriteriaService {
         Root<Ship> root = criteria.from(Ship.class);
 
         criteria.select(root)
-                .where(imposeRestrictions(builder, root, params))
-                .orderBy(imposeOrder(builder, root, params));
+                .where(getRestrictions(builder, root, params))
+                .orderBy(getOrder(builder, root, params));
 
         Query query = entityManager.createQuery(criteria);
         imposePagination(query, params);
@@ -29,7 +29,7 @@ public class CriteriaService {
         return query;
     }
 
-    private Predicate imposeRestrictions(CriteriaBuilder builder, Root<Ship> root, Map<String, String> params) {
+    private Predicate getRestrictions(CriteriaBuilder builder, Root<Ship> root, Map<String, String> params) {
         String name = params.getOrDefault("name", "");
         String planet = params.getOrDefault("planet", "");
         ShipType shipType = ShipType.valueOf(params.getOrDefault("shipType", "EMPTY"));
@@ -80,7 +80,7 @@ public class CriteriaService {
         return predicate;
     }
 
-    private Order imposeOrder(CriteriaBuilder builder, Root<Ship> root, Map<String, String> params) {
+    private Order getOrder(CriteriaBuilder builder, Root<Ship> root, Map<String, String> params) {
         Order order = builder.asc(root.get(Ship_.id));
         String orderStr = String.valueOf(params.getOrDefault("order", "")).toLowerCase();
 
