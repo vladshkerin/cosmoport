@@ -14,7 +14,7 @@ import java.util.Map;
 @Service("criteriaService")
 public class CriteriaService {
 
-    public Query createQuery(EntityManager entityManager, Map<String, String> params) {
+    public Query createQuery(EntityManager entityManager, Map<String, String> params, boolean isPagination) {
         CriteriaBuilder builder = entityManager.getCriteriaBuilder();
         CriteriaQuery<Ship> criteria = builder.createQuery(Ship.class);
         Root<Ship> root = criteria.from(Ship.class);
@@ -24,7 +24,10 @@ public class CriteriaService {
                 .orderBy(getOrder(builder, root, params));
 
         Query query = entityManager.createQuery(criteria);
-        imposePagination(query, params);
+
+        if (isPagination) {
+            imposePagination(query, params);
+        }
 
         return query;
     }
@@ -64,16 +67,28 @@ public class CriteriaService {
             Predicate p = builder.equal(root.get(Ship_.isUsed), Boolean.valueOf(isUsedStr));
             predicate = builder.and(predicate, p);
         }
-        if (minSpeed > 0.0 || maxSpeed > 0.0) {
-            Predicate p = builder.between(root.get(Ship_.speed), minSpeed, maxSpeed);
+        if (minSpeed > 0.0) {
+            Predicate p = builder.greaterThanOrEqualTo(root.get(Ship_.speed), minSpeed);
             predicate = builder.and(predicate, p);
         }
-        if (minCrewSize > 0 || maxCrewSize > 0) {
-            Predicate p = builder.between(root.get(Ship_.crewSize), minCrewSize, maxCrewSize);
+        if (maxSpeed > 0.0) {
+            Predicate p = builder.lessThanOrEqualTo(root.get(Ship_.speed), maxSpeed);
             predicate = builder.and(predicate, p);
         }
-        if (minRating > 0 || maxRating > 0) {
-            Predicate p = builder.between(root.get(Ship_.rating), minRating, maxRating);
+        if (minCrewSize > 0) {
+            Predicate p = builder.greaterThanOrEqualTo(root.get(Ship_.crewSize), minCrewSize);
+            predicate = builder.and(predicate, p);
+        }
+        if (maxCrewSize > 0) {
+            Predicate p = builder.lessThanOrEqualTo(root.get(Ship_.crewSize), maxCrewSize);
+            predicate = builder.and(predicate, p);
+        }
+        if (minRating > 0) {
+            Predicate p = builder.greaterThanOrEqualTo(root.get(Ship_.rating), minRating);
+            predicate = builder.and(predicate, p);
+        }
+        if (maxRating > 0) {
+            Predicate p = builder.lessThanOrEqualTo(root.get(Ship_.rating), maxRating);
             predicate = builder.and(predicate, p);
         }
 
