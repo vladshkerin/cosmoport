@@ -5,8 +5,9 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
-import java.time.ZoneId;
+import java.util.Date;
 
 @Service("utilsService")
 public class UtilsService {
@@ -20,7 +21,8 @@ public class UtilsService {
     }
 
     int getYearShip(Ship ship) {
-        LocalDate localDate = ship.getProdDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        Date date = ship.getProdDate();
+        LocalDate localDate = LocalDate.parse(new SimpleDateFormat("yyyy-MM-dd").format(date));
         return localDate.getYear();
     }
 
