@@ -17,58 +17,21 @@ public class ValidationService {
 
     private UtilsService utilsService;
 
-    public boolean validationShip(Ship ship) {
+    public boolean validationShip(Ship ship, boolean checkEmptyField) {
         Field[] fields = ship.getClass().getDeclaredFields();
         for (Field field : fields) {
             if (Modifier.isPrivate(field.getModifiers())) {
                 field.setAccessible(true);
             }
 
-            try {
-                if (!"id isUsed rating".contains(field.getName()) && isEmpty(field.get(ship))) {
-                    return false;
+            if (checkEmptyField) {
+                try {
+                    if (!"id isUsed rating".contains(field.getName()) && isEmpty(field.get(ship))) {
+                        return false;
+                    }
+                } catch (IllegalAccessException e) {
+                    throw new BadRequestException(e.getMessage());
                 }
-            } catch (IllegalAccessException e) {
-                throw new BadRequestException(e.getMessage());
-            }
-
-            switch (field.getName()) {
-                case "name":
-                    if (ship.getName().isEmpty() || ship.getName().length() >= 50) {
-                        return false;
-                    }
-                    break;
-                case "planet":
-                    if (ship.getPlanet().isEmpty() || ship.getPlanet().length() >= 50) {
-                        return false;
-                    }
-                    break;
-                case "speed":
-                    double speed = new BigDecimal(ship.getSpeed()).setScale(2, RoundingMode.UP).doubleValue();
-                    if (speed < 0.01 || speed > 0.99) {
-                        return false;
-                    }
-                case "crewSize":
-                    int crewSize = ship.getCrewSize();
-                    if (crewSize < 1 || crewSize > 9999) {
-                        return false;
-                    }
-                    break;
-                case "prodDate":
-                    int yearShip = utilsService.getYearShip(ship);
-                    if (yearShip < 2800 || yearShip > 3019) {
-                        return false;
-                    }
-            }
-        }
-        return true;
-    }
-
-    public boolean validationShipForUpdate(Ship ship) {
-        Field[] fields = ship.getClass().getDeclaredFields();
-        for (Field field : fields) {
-            if (Modifier.isPrivate(field.getModifiers())) {
-                field.setAccessible(true);
             }
 
             switch (field.getName()) {
@@ -80,8 +43,10 @@ public class ValidationService {
                     }
                     break;
                 case "planet":
-                    if (ship.getPlanet() != null && ship.getPlanet().length() >= 50) {
-                        return false;
+                    if (ship.getPlanet() != null) {
+                        if (ship.getPlanet().isEmpty() || ship.getPlanet().length() >= 50) {
+                            return false;
+                        }
                     }
                     break;
                 case "speed":
@@ -91,7 +56,6 @@ public class ValidationService {
                             return false;
                         }
                     }
-                    break;
                 case "crewSize":
                     if (ship.getCrewSize() != null) {
                         int crewSize = ship.getCrewSize();

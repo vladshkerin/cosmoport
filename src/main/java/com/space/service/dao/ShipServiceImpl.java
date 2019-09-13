@@ -58,7 +58,7 @@ public class ShipServiceImpl implements ShipService {
 
     @Override
     public Ship create(Ship ship) {
-        if (!validationService.validationShip(ship)) {
+        if (!validationService.validationShip(ship, true)) {
             throw new BadRequestException("Validate error with id: " + ship.getId());
         }
 
@@ -73,7 +73,7 @@ public class ShipServiceImpl implements ShipService {
     public Ship update(Long id, Ship shipSrc) {
         if (!utilsService.isStringLong(String.valueOf(id)) || id < 1) {
             throw new BadRequestException("Not validation id: " + id);
-        } else if (!shipSrc.equals(new Ship()) && !validationService.validationShipForUpdate(shipSrc)) {
+        } else if (!shipSrc.equals(new Ship()) && !validationService.validationShip(shipSrc, false)) {
             throw new BadRequestException("Validate error with id: " + shipSrc.getId());
         }
 
