@@ -26,15 +26,15 @@ public class UtilsService {
         return localDate.getYear();
     }
 
-    public boolean isStringLong(String s) {
+    public boolean isStringNotLong(String s) {
         try {
             Long.parseLong(s);
             if (!s.contains(".")) {
-                return true;
+                return false;
             }
         } catch (NumberFormatException e) {
             //empty body
         }
-        return false;
+        return true;
     }
 }

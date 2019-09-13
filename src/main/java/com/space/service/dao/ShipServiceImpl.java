@@ -4,6 +4,7 @@ import com.space.exception.BadRequestException;
 import com.space.exception.NoFoundException;
 import com.space.model.Ship;
 import com.space.service.CriteriaService;
+import com.space.service.UpdateService;
 import com.space.service.UtilsService;
 import com.space.service.ValidationService;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +32,8 @@ public class ShipServiceImpl implements ShipService {
 
     private ValidationService validationService;
 
+    private UpdateService updateService;
+
     private UtilsService utilsService;
 
     @Transactional(readOnly = true)
@@ -44,7 +47,7 @@ public class ShipServiceImpl implements ShipService {
     @Transactional(readOnly = true)
     @Override
     public Ship findById(Long id) {
-        if (!utilsService.isStringLong(String.valueOf(id)) || id < 1) {
+        if (utilsService.isStringNotLong(String.valueOf(id)) || id < 1) {
             throw new BadRequestException("Not validation id: " + id);
         }
 
@@ -58,7 +61,7 @@ public class ShipServiceImpl implements ShipService {
 
     @Override
     public Ship create(Ship ship) {
-        if (!validationService.validationShip(ship, true)) {
+        if (validationService.noValidShip(ship, true)) {
             throw new BadRequestException("Validate error with id: " + ship.getId());
         }
 
@@ -71,9 +74,9 @@ public class ShipServiceImpl implements ShipService {
 
     @Override
     public Ship update(Long id, Ship shipSrc) {
-        if (!utilsService.isStringLong(String.valueOf(id)) || id < 1) {
+        if (utilsService.isStringNotLong(String.valueOf(id)) || id < 1) {
             throw new BadRequestException("Not validation id: " + id);
-        } else if (!shipSrc.equals(new Ship()) && !validationService.validationShip(shipSrc, false)) {
+        } else if (!shipSrc.equals(new Ship()) && validationService.noValidShip(shipSrc, false)) {
             throw new BadRequestException("Validate error with id: " + shipSrc.getId());
         }
 
@@ -83,41 +86,13 @@ public class ShipServiceImpl implements ShipService {
         }
 
         if (!shipSrc.equals(new Ship())) {
-            updateShip(shipSrc, shipDest);
+            updateService.updateShip(shipSrc, shipDest);
             entityManager.merge(shipDest);
         }
 
         log.info("Ship updated with id: " + shipDest.getId());
 
         return shipDest;
-    }
-
-    private void updateShip(Ship shipSrc, Ship shipDest) {
-        if (shipSrc.getName() != null) {
-            shipDest.setName(shipSrc.getName());
-        }
-        if (shipSrc.getPlanet() != null) {
-            shipDest.setPlanet(shipSrc.getPlanet());
-        }
-        if (shipSrc.getShipType() != null) {
-            shipDest.setShipType(shipSrc.getShipType());
-        }
-        if (shipSrc.getProdDate() != null) {
-            shipDest.setProdDate(shipSrc.getProdDate());
-        }
-        if (shipSrc.getIsUsed() != null) {
-            shipDest.setIsUsed(shipSrc.getIsUsed());
-        }
-        if (shipSrc.getSpeed() != null) {
-            shipDest.setSpeed(shipSrc.getSpeed());
-        }
-        if (shipSrc.getCrewSize() != null) {
-            shipDest.setCrewSize(shipSrc.getCrewSize());
-        }
-        if (shipSrc.getRating() != null) {
-            shipDest.setRating(shipSrc.getRating());
-        }
-        shipDest.setRating(utilsService.calculateRating(shipDest));
     }
 
     @Override
@@ -136,6 +111,11 @@ public class ShipServiceImpl implements ShipService {
     @Autowired
     public void setValidationService(ValidationService validationService) {
         this.validationService = validationService;
+    }
+
+    @Autowired
+    public void setUpdateService(UpdateService updateService) {
+        this.updateService = updateService;
     }
 
     @Autowired
