@@ -3,7 +3,6 @@ package com.space.service.dao;
 import com.space.exception.BadRequestException;
 import com.space.exception.NoFoundException;
 import com.space.model.Ship;
-import com.space.repository.ShipJpaRepository;
 import com.space.service.CriteriaService;
 import com.space.service.UtilsService;
 import com.space.service.ValidationService;
@@ -18,7 +17,6 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @Service("shipService")
 @Repository
@@ -28,8 +26,6 @@ public class ShipServiceImpl implements ShipService {
 
     @PersistenceContext
     private EntityManager entityManager;
-
-    private ShipJpaRepository shipJpaRepository;
 
     private CriteriaService criteriaService;
 
@@ -52,31 +48,76 @@ public class ShipServiceImpl implements ShipService {
             throw new BadRequestException("Not validation id: " + id);
         }
 
-        Optional<Ship> shipOptional = shipJpaRepository.findById(id);
-        if (shipOptional.isPresent()) {
-            return shipOptional.get();
-        } else {
+        Ship ship = entityManager.find(Ship.class, id);
+        if (ship == null) {
             throw new NoFoundException("Not found ship with id: " + id);
         }
+
+        return ship;
     }
 
     @Override
     public Ship create(Ship ship) {
-        if (validationService.validationShip(ship)) {
-            ship.setRating(utilsService.calculateRating(ship));
-            entityManager.persist(ship);
-        } else {
+        if (!validationService.validationShip(ship)) {
             throw new BadRequestException("Validate error with id: " + ship.getId());
         }
+
+        ship.setRating(utilsService.calculateRating(ship));
+        entityManager.persist(ship);
+
         log.info("Ship saved with id: " + ship.getId());
         return ship;
     }
 
     @Override
-    public Ship update(Ship ship) {
-        entityManager.merge(ship);
-        log.info("Ship updated with id: " + ship.getId());
-        return ship;
+    public Ship update(Long id, Ship shipSrc) {
+        if (!utilsService.isStringLong(String.valueOf(id)) || id < 1) {
+            throw new BadRequestException("Not validation id: " + id);
+        } else if (!shipSrc.equals(new Ship()) && !validationService.validationShipForUpdate(shipSrc)) {
+            throw new BadRequestException("Validate error with id: " + shipSrc.getId());
+        }
+
+        Ship shipDest = entityManager.find(Ship.class, id);
+        if (shipDest == null) {
+            throw new NoFoundException("Not found ship with id: " + id);
+        }
+
+        if (!shipSrc.equals(new Ship())) {
+            updateShip(shipSrc, shipDest);
+            entityManager.merge(shipDest);
+        }
+
+        log.info("Ship updated with id: " + shipDest.getId());
+
+        return shipDest;
+    }
+
+    private void updateShip(Ship shipSrc, Ship shipDest) {
+        if (shipSrc.getName() != null) {
+            shipDest.setName(shipSrc.getName());
+        }
+        if (shipSrc.getPlanet() != null) {
+            shipDest.setPlanet(shipSrc.getPlanet());
+        }
+        if (shipSrc.getShipType() != null) {
+            shipDest.setShipType(shipSrc.getShipType());
+        }
+        if (shipSrc.getProdDate() != null) {
+            shipDest.setProdDate(shipSrc.getProdDate());
+        }
+        if (shipSrc.getIsUsed() != null) {
+            shipDest.setIsUsed(shipSrc.getIsUsed());
+        }
+        if (shipSrc.getSpeed() != null) {
+            shipDest.setSpeed(shipSrc.getSpeed());
+        }
+        if (shipSrc.getCrewSize() != null) {
+            shipDest.setCrewSize(shipSrc.getCrewSize());
+        }
+        if (shipSrc.getRating() != null) {
+            shipDest.setRating(shipSrc.getRating());
+        }
+        shipDest.setRating(utilsService.calculateRating(shipDest));
     }
 
     @Override
@@ -85,11 +126,6 @@ public class ShipServiceImpl implements ShipService {
         Ship mergedShip = entityManager.merge(ship);
         entityManager.remove(mergedShip);
         log.info("Ship deleted with id: " + id);
-    }
-
-    @Autowired
-    public void setShipJpaRepository(ShipJpaRepository shipJpaRepository) {
-        this.shipJpaRepository = shipJpaRepository;
     }
 
     @Autowired

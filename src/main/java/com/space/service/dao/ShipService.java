@@ -13,7 +13,7 @@ public interface ShipService {
 
     Ship create(Ship ship);
 
-    Ship update(Ship ship);
+    Ship update(Long id, Ship ship);
 
     void delete(Long ship);
 }

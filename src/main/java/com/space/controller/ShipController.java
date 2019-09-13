@@ -43,7 +43,7 @@ public class ShipController {
     @PostMapping("/ships/{id}")
     public Ship update(@PathVariable Long id, @RequestBody Ship ship) {
         log.info("Update ship");
-        return shipService.update(ship);
+        return shipService.update(id, ship);
     }
 
     @DeleteMapping("/ships/{id}")
