@@ -53,22 +53,25 @@ public class ShipServiceImpl implements ShipService {
 
         Ship ship = entityManager.find(Ship.class, id);
         if (ship == null) {
-            throw new NoFoundException("Not found ship with id: " + id);
+            throw new NoFoundException("Not found ship by id: " + id);
         }
+
+        log.info("Ship find by id: " + id);
 
         return ship;
     }
 
     @Override
     public Ship create(Ship ship) {
-        if (validationService.noValidShip(ship, true)) {
-            throw new BadRequestException("Validate error with id: " + ship.getId());
+        if (validationService.notValidShip(ship, true)) {
+            throw new BadRequestException("Validate error by id: " + ship.getId());
         }
 
         ship.setRating(utilsService.calculateRating(ship));
         entityManager.persist(ship);
 
         log.info("Ship saved with id: " + ship.getId());
+
         return ship;
     }
 
@@ -76,21 +79,21 @@ public class ShipServiceImpl implements ShipService {
     public Ship update(Long id, Ship shipSrc) {
         if (utilsService.isStringNotLong(String.valueOf(id)) || id < 1) {
             throw new BadRequestException("Not validation id: " + id);
-        } else if (!shipSrc.equals(new Ship()) && validationService.noValidShip(shipSrc, false)) {
-            throw new BadRequestException("Validate error with id: " + shipSrc.getId());
+        } else if (validationService.notValidShip(shipSrc, false)) {
+            throw new BadRequestException("Validate error by id: " + shipSrc.getId());
         }
 
         Ship shipDest = entityManager.find(Ship.class, id);
         if (shipDest == null) {
-            throw new NoFoundException("Not found ship with id: " + id);
+            throw new NoFoundException("Not found ship by id: " + id);
         }
 
-        if (!shipSrc.equals(new Ship())) {
+        if (!utilsService.isShipWithEmptyBody(shipSrc)) {
             updateService.updateShip(shipSrc, shipDest);
             entityManager.merge(shipDest);
         }
 
-        log.info("Ship updated with id: " + shipDest.getId());
+        log.info("Ship updated by id: " + shipDest.getId());
 
         return shipDest;
     }
@@ -99,8 +102,10 @@ public class ShipServiceImpl implements ShipService {
     public void delete(Long id) {
         Ship ship = findById(id);
         Ship mergedShip = entityManager.merge(ship);
+
         entityManager.remove(mergedShip);
-        log.info("Ship deleted with id: " + id);
+
+        log.info("Ship deleted by id: " + id);
     }
 
     @Autowired

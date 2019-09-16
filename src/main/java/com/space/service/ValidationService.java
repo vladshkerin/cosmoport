@@ -17,7 +17,7 @@ public class ValidationService {
 
     private UtilsService utilsService;
 
-    public boolean noValidShip(Ship ship, boolean checkEmptyField) {
+    public boolean notValidShip(Ship ship, boolean checkEmptyField) {
         Field[] fields = ship.getClass().getDeclaredFields();
         for (Field field : fields) {
             if (Modifier.isPrivate(field.getModifiers())) {

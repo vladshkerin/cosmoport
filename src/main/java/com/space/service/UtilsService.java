@@ -33,8 +33,12 @@ public class UtilsService {
                 return false;
             }
         } catch (NumberFormatException e) {
-            //empty body
+            return false;
         }
         return true;
+    }
+
+    public boolean isShipWithEmptyBody(Ship ship) {
+        return ship.equals(new Ship());
     }
 }
