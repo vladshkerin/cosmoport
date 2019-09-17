@@ -1,7 +1,7 @@
 package com.space.controller;
 
 import com.space.model.Ship;
-import com.space.service.dao.ShipService;
+import com.space.service.dao.ShipServiceDAO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -14,46 +14,46 @@ import java.util.Map;
 @Slf4j
 public class ShipController {
 
-    private ShipService shipService;
+    private ShipServiceDAO shipServiceDAO;
 
     @GetMapping("/ships")
     public List<Ship> findAllWithCriteria(@RequestParam Map<String, String> params) {
         log.info("Find all ships with criteria");
-        return shipService.findAllByCriteria(params, true);
+        return shipServiceDAO.findAllByCriteria(params, true);
     }
 
     @GetMapping("/ships/count")
     public int countShips(@RequestParam Map<String, String> params) {
         log.info("Count ships");
-        return shipService.findAllByCriteria(params, false).size();
+        return shipServiceDAO.findAllByCriteria(params, false).size();
     }
 
     @GetMapping("/ships/{id}")
     public Ship findById(@PathVariable Long id) {
         log.info("Find ship by id: " + id);
-        return shipService.findById(id);
+        return shipServiceDAO.findById(id);
     }
 
     @PostMapping("/ships")
     public Ship create(@RequestBody Ship ship) {
         log.info("Create ship");
-        return shipService.create(ship);
+        return shipServiceDAO.create(ship);
     }
 
     @PostMapping("/ships/{id}")
     public Ship update(@PathVariable Long id, @RequestBody Ship ship) {
         log.info("Update ship");
-        return shipService.update(id, ship);
+        return shipServiceDAO.update(id, ship);
     }
 
     @DeleteMapping("/ships/{id}")
     public void delete(@PathVariable Long id) {
         log.info("Delete ship");
-        shipService.delete(id);
+        shipServiceDAO.delete(id);
     }
 
     @Autowired
-    public void setShipService(ShipService shipService) {
-        this.shipService = shipService;
+    public void setShipServiceDAO(ShipServiceDAO shipServiceDAO) {
+        this.shipServiceDAO = shipServiceDAO;
     }
 }

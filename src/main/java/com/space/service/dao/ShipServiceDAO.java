@@ -5,7 +5,7 @@ import com.space.model.Ship;
 import java.util.List;
 import java.util.Map;
 
-public interface ShipService {
+public interface ShipServiceDAO {
 
     List<Ship> findAllByCriteria(Map<String, String> params, boolean isPagination);
 

@@ -19,11 +19,11 @@ import javax.persistence.Query;
 import java.util.List;
 import java.util.Map;
 
-@Service("shipService")
+@Service("shipServiceDAO")
 @Repository
 @Transactional
 @Slf4j
-public class ShipServiceImpl implements ShipService {
+public class ShipServiceDAOImpl implements ShipServiceDAO {
 
     @PersistenceContext
     private EntityManager entityManager;
