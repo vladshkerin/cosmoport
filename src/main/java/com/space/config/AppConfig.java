@@ -1,8 +1,11 @@
 package com.space.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.core.env.Environment;
 import org.springframework.dao.annotation.PersistenceExceptionTranslationPostProcessor;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
@@ -20,8 +23,11 @@ import java.util.Properties;
 @Configuration
 @EnableTransactionManagement
 @ComponentScan("com.space.service")
+@PropertySource(value = "classpath:db.properties")
 @EnableJpaRepositories(basePackages = "com.space.repository")
 public class AppConfig {
+
+    Environment env;
 
     @Bean
     public LocalContainerEntityManagerFactoryBean entityManagerFactory() {
@@ -39,10 +45,10 @@ public class AppConfig {
     @Bean
     public DataSource dataSource() {
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
-        dataSource.setDriverClassName("com.mysql.cj.jdbc.Driver");
-        dataSource.setUrl("jdbc:mysql://localhost:3306/cosmoport?serverTimezone=UTC");
-        dataSource.setUsername("root");
-        dataSource.setPassword("root");
+        dataSource.setDriverClassName(env.getRequiredProperty("jdbc.driverClassName"));
+        dataSource.setUrl(env.getRequiredProperty("jdbc.url"));
+        dataSource.setUsername(env.getRequiredProperty("jdbc.username"));
+        dataSource.setPassword(env.getRequiredProperty("jdbc.password"));
         return dataSource;
     }
 
@@ -61,8 +67,14 @@ public class AppConfig {
 
     private Properties additionalProperties() {
         Properties properties = new Properties();
-        properties.setProperty("hibernate.dialect", "org.hibernate.dialect.MySQL5Dialect");
+        properties.setProperty("hibernate.dialect", env.getRequiredProperty("hibernate.dialect"));
+        properties.setProperty("hibernate.show_sql", env.getRequiredProperty("hibernate.show_sql"));
 
         return properties;
+    }
+
+    @Autowired
+    public void setEnv(Environment env) {
+        this.env = env;
     }
 }
