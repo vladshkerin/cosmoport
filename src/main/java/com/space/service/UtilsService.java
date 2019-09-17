@@ -38,7 +38,7 @@ public class UtilsService {
         return true;
     }
 
-    public boolean isShipWithEmptyBody(Ship ship) {
-        return ship.equals(new Ship());
+    public boolean isShipNotNew(Ship ship) {
+        return !ship.equals(new Ship());
     }
 }
